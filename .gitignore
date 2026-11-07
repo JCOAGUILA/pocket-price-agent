@@ -1,0 +1,26 @@
+# Claves: nunca al repositorio
+.env
+
+# Datos y documentos generados (se recrean con `docker compose up`)
+data/
+
+# Material del curso (no es nuestro para publicar)
+_curso/
+
+# Notas de trabajo internas y presentación (no van al repositorio)
+CLAUDE.md
+ESTADO.md
+PENDIENTES.md
+.claude/
+presentacion/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Editor / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

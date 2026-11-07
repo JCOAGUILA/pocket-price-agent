@@ -1,0 +1,157 @@
+# Pocket Price Agent — infraestructura local
+# Floci GCP emula Google Cloud (Cloud Storage + Secret Manager); Postgres es
+# el almacén analítico y la memoria del agente. `init` corre una vez: genera
+# datos, los sube al bucket y los carga en Postgres. Luego arrancan backend
+# y frontend. Para AWS: CLOUD_PROVIDER=aws + emulador floci/floci (ver README).
+#
+# Seguridad: las credenciales de Postgres de este archivo (pp/pp, agente_ro) son
+# solo para desarrollo local y todos los puertos se publican únicamente en
+# 127.0.0.1. Las claves de los LLM viven en .env (no versionado). En la nube,
+# las contraseñas van en Secret Manager (ver README, sección 6).
+
+name: pocket-price-agent
+
+x-cloud-env: &cloud-env
+  CLOUD_PROVIDER: gcp
+  GOOGLE_CLOUD_PROJECT: floci-local
+  STORAGE_EMULATOR_HOST: http://floci-gcp:4588
+  SECRET_MANAGER_EMULATOR_HOST: floci-gcp:4588
+  BUCKET: pocket-price-raw
+  SECRET_NAME: pocket-price-llm
+
+x-db-env: &db-env
+  DATABASE_URL: postgresql://pp:pp@postgres:5432/pocketprice
+
+# LangSmith (la API key llega desde Secret Manager, no de aquí)
+x-langsmith-env: &langsmith-env
+  LANGSMITH_TRACING: "true"
+  LANGSMITH_ENDPOINT: https://apac.api.smith.langchain.com
+  LANGSMITH_AGENT_ID: pocket-price-agent
+  LANGSMITH_AGENT_ENVIRONMENT: local
+
+services:
+  floci-gcp:
+    image: floci/floci-gcp:latest
+    ports:
+      - "127.0.0.1:4588:4588"
+    environment:
+      FLOCI_GCP_HOSTNAME: floci-gcp
+      FLOCI_GCP_BASE_URL: http://floci-gcp:4588
+      FLOCI_GCP_DEFAULT_PROJECT_ID: floci-local  # el que muestra floci-ui
+      FLOCI_GCP_STORAGE_MODE: hybrid
+      FLOCI_GCP_STORAGE_PERSISTENT_PATH: /app/data
+    volumes:
+      - floci_gcp_data:/app/data
+
+  # Consola web de Floci como servicio propio: solo habla con la API del
+  # emulador, así no hace falta montar docker.sock.
+  floci-ui:
+    image: floci/floci-ui:0.7.0
+    depends_on:
+      - floci-gcp
+    ports:
+      - "127.0.0.1:4500:4500"
+    environment:
+      FLOCI_GCP_ENDPOINT: http://floci-gcp:4588
+
+  # Vector store del RAG (en GCP: Elasticsearch en Compute Engine o Elastic Cloud).
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.3
+    ports:
+      - "127.0.0.1:9200:9200"
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  postgres:
+    image: postgres:17
+    ports:
+      - "127.0.0.1:5433:5432"
+    environment:
+      POSTGRES_DB: pocketprice
+      POSTGRES_USER: pp
+      POSTGRES_PASSWORD: pp
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pp -d pocketprice"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  init:
+    build:
+      context: .
+      dockerfile: infra/init/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      floci-gcp:
+        condition: service_started
+    environment:
+      <<: [*cloud-env, *db-env]
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+    volumes:
+      - ./data:/data
+    restart: "no"
+
+  # Ingesta documental: bucket docs/ -> LlamaIndex -> Elasticsearch, y
+  # extracción estructurada de acuerdos fuera de SAP -> Postgres.
+  ingesta:
+    build:
+      context: .
+      dockerfile: infra/ingesta/Dockerfile
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      <<: [*cloud-env, *db-env, *langsmith-env]
+      ES_URL: http://elasticsearch:9200
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    depends_on:
+      ingesta:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      <<: [*cloud-env, *db-env, *langsmith-env]
+      ES_URL: http://elasticsearch:9200
+      AGENT_DATABASE_URL: postgresql://agente_ro:agente_ro@postgres:5432/pocketprice
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8501:8501"
+    environment:
+      BACKEND_URL: http://backend:8000
+      TZ: America/Lima
+
+volumes:
+  floci_gcp_data:
+  pg_data:
+  es_data:

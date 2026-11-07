@@ -1,0 +1,169 @@
+# Fuente de verdad de los acuerdos comerciales FUERA de SAP de
+# "Andina Materiales de Construcción S.A.C." (empresa ficticia).
+#
+# De aquí salen:
+#   1. Los documentos (PDF/DOCX/MD) que se indexan en el RAG (generate_docs.py).
+#   2. Los valores esperados para evaluar la extracción con LLM (LangSmith).
+# El agente NUNCA lee este archivo: solo ve los documentos.
+
+empresa:
+  razon_social: Andina Materiales de Construcción S.A.C.
+  ruc: "20999999991"   # ficticio
+  ciudad: Lima
+
+politicas_descuento:
+  - id: POL-2025
+    titulo: Política Comercial de Descuentos 2025
+    fecha_emision: 2025-01-06
+    vigencia_desde: 2025-01-01
+    vigencia_hasta: 2025-12-31
+    topes_comercial:          # % máximo de descuento comercial en factura
+      Distribuidor: 0.17
+      Constructora: 0.14
+      Retail moderno: 0.10
+      Ferretería: 0.07
+    descuento_volumen: {cantidad_min: 200, tope: 0.06}
+    pronto_pago: {plazo_max_dias: 15, pct: 0.02}
+  - id: POL-2026
+    titulo: Política Comercial de Descuentos 2026
+    fecha_emision: 2026-01-08
+    vigencia_desde: 2026-01-01
+    vigencia_hasta: 2026-12-31
+    topes_comercial:
+      Distribuidor: 0.17
+      Constructora: 0.12        # baja desde 14 % (Acta CP-01-2026)
+      Retail moderno: 0.10
+      Ferretería: 0.07
+    descuento_volumen: {cantidad_min: 200, tope: 0.06}
+    pronto_pago: {plazo_max_dias: 15, pct: 0.02}
+
+# Grids comerciales (grillas promocionales): descuento por nota de crédito, no se registra en SAP.
+grillas:
+  - id: GRP-2025-Q4
+    titulo: Grid Comercial IV Trimestre 2025
+    fecha_emision: 2025-10-20
+    filas:
+      - {id: GRP-2025Q4-01, categoria: Planchas de yeso, canal: Ferretería, pct: 0.07, desde: 2025-11-01, hasta: 2025-12-31}
+      - {id: GRP-2025Q4-02, categoria: Planchas de yeso, canal: Distribuidor, pct: 0.07, desde: 2025-11-01, hasta: 2025-12-31}
+  - id: GRP-2026-Q1
+    titulo: Grid Comercial I Trimestre 2026
+    fecha_emision: 2025-12-18
+    filas:
+      - {id: GRP-2026Q1-01, categoria: Placas cementicias, canal: Retail moderno, pct: 0.04, desde: 2026-01-01, hasta: 2026-03-31}
+  - id: GRP-2026-Q2
+    titulo: Grid Comercial II Trimestre 2026
+    fecha_emision: 2026-03-19
+    filas:
+      - {id: GRP-2026Q2-01, categoria: Tejas onduladas, canal: Distribuidor, pct: 0.03, desde: 2026-04-01, hasta: 2026-06-30}
+      - {id: GRP-2026Q2-02, categoria: Tejas onduladas, canal: Ferretería, pct: 0.03, desde: 2026-04-01, hasta: 2026-06-30}
+      - {id: GRP-2026Q2-03, categoria: Tejas onduladas, canal: Constructora, pct: 0.03, desde: 2026-04-01, hasta: 2026-06-30}
+      - {id: GRP-2026Q2-04, categoria: Tejas onduladas, canal: Retail moderno, pct: 0.03, desde: 2026-04-01, hasta: 2026-06-30}
+  - id: GRP-2026-Q3
+    titulo: Grid Comercial III Trimestre 2026
+    fecha_emision: 2026-06-22
+    filas:
+      - {id: GRP-2026Q3-01, categoria: Perfilería, canal: Constructora, pct: 0.05, desde: 2026-07-01, hasta: 2026-09-30}
+
+# Campañas de descuento: también por nota de crédito fuera de SAP.
+campanas:
+  - id: CMP-2025-RET
+    nombre: Programa de Marketing Cooperativo Retail 2025
+    fecha_emision: 2025-01-10
+    canal: Retail moderno
+    cantidad_min: null
+    pct: 0.02
+    desde: 2025-01-01
+    hasta: 2025-12-31
+    detalle: Aporte para exhibición, encartes y material POP en tiendas.
+  - id: CMP-2026-RET
+    nombre: Programa de Marketing Cooperativo Retail 2026
+    fecha_emision: 2026-01-12
+    canal: Retail moderno
+    cantidad_min: null
+    pct: 0.025
+    desde: 2026-01-01
+    hasta: 2026-12-31
+    detalle: Aporte para exhibición, encartes y material POP; incluye ferias de verano.
+  - id: CMP-2026-CON
+    nombre: Campaña Constructor Andino 2026
+    fecha_emision: 2026-01-20
+    canal: Constructora
+    cantidad_min: 300
+    pct: 0.03
+    desde: 2026-01-01
+    hasta: 2026-12-31
+    detalle: Descuento adicional por pedido (línea) igual o mayor a 300 unidades.
+
+# Cartas comerciales de rebate por cumplimiento de objetivo trimestral.
+# El rebate se calcula sobre la venta neta en factura del trimestre;
+# se aplica el tramo más alto alcanzado (cumplimiento = unidades / objetivo).
+cartas_rebate:
+  - {id: CR-2026-DIS-001, cliente_id: CLI-DIS-001, fecha_emision: 2026-01-09, objetivo_trimestral: 25000,
+     tramos: [{cumplimiento_min: 0.90, pct: 0.02}, {cumplimiento_min: 1.00, pct: 0.035}, {cumplimiento_min: 1.10, pct: 0.05}]}
+  - {id: CR-2026-DIS-004, cliente_id: CLI-DIS-004, fecha_emision: 2026-01-09, objetivo_trimestral: 26000,
+     tramos: [{cumplimiento_min: 0.90, pct: 0.02}, {cumplimiento_min: 1.00, pct: 0.035}, {cumplimiento_min: 1.10, pct: 0.05}]}
+  - {id: CR-2026-DIS-006, cliente_id: CLI-DIS-006, fecha_emision: 2026-01-12, objetivo_trimestral: 27000,
+     tramos: [{cumplimiento_min: 0.90, pct: 0.02}, {cumplimiento_min: 1.00, pct: 0.035}, {cumplimiento_min: 1.10, pct: 0.05}]}
+  - {id: CR-2026-DIS-010, cliente_id: CLI-DIS-010, fecha_emision: 2026-01-12, objetivo_trimestral: 25000,
+     tramos: [{cumplimiento_min: 0.90, pct: 0.02}, {cumplimiento_min: 1.00, pct: 0.035}, {cumplimiento_min: 1.10, pct: 0.05}]}
+  - {id: CR-2026-DIS-011, cliente_id: CLI-DIS-011, fecha_emision: 2026-01-14, objetivo_trimestral: 26000,
+     tramos: [{cumplimiento_min: 0.90, pct: 0.02}, {cumplimiento_min: 1.00, pct: 0.035}, {cumplimiento_min: 1.10, pct: 0.05}]}
+  - {id: CR-2026-CON-006, cliente_id: CLI-CON-006, fecha_emision: 2026-01-16, objetivo_trimestral: 17000,
+     tramos: [{cumplimiento_min: 0.95, pct: 0.015}, {cumplimiento_min: 1.00, pct: 0.03}]}
+  - {id: CR-2026-CON-014, cliente_id: CLI-CON-014, fecha_emision: 2026-01-16, objetivo_trimestral: 18500,
+     tramos: [{cumplimiento_min: 0.95, pct: 0.015}, {cumplimiento_min: 1.00, pct: 0.03}]}
+  - {id: CR-2026-RET-001, cliente_id: CLI-RET-001, fecha_emision: 2026-01-19, objetivo_trimestral: 11000,
+     tramos: [{cumplimiento_min: 1.00, pct: 0.025}]}
+vigencia_cartas: {desde: 2026-01-01, hasta: 2026-12-31}
+
+# Actas del Comité de Precios.
+actas:
+  - id: CP-02-2025
+    fecha: 2025-02-20
+    acuerdos:
+      - Se ratifican los topes de descuento comercial de la Política 2025.
+      - >-
+        Se APRUEBA excepción para Ferretería Santa Rosa 3 (CLI-FER-003): descuento comercial
+        de hasta 17 % entre el 01/03/2025 y el 31/12/2026, por abastecer un proyecto minero en
+        Arequipa con competencia de producto importado.
+    excepciones:
+      - {cliente_id: CLI-FER-003, estado: aprobada, concepto: dscto_comercial, tope: 0.17, desde: 2025-03-01, hasta: 2026-12-31}
+  - id: CP-09-2025
+    fecha: 2025-09-18
+    acuerdos:
+      - Se aprueba la Grid Comercial del IV Trimestre 2025 para planchas de yeso (7 %) en Ferretería y Distribuidor.
+      - Se mantiene el Programa de Marketing Cooperativo Retail 2025 (2 %).
+    excepciones: []
+  - id: CP-01-2026
+    fecha: 2026-01-15
+    acuerdos:
+      - Se aprueba la Política Comercial de Descuentos 2026; el tope del canal Constructora baja de 14 % a 12 %.
+      - Se aprueba el programa de rebates por cumplimiento trimestral para 8 clientes clave mediante cartas comerciales.
+      - Se aprueba la Campaña Constructor Andino 2026 (3 % por línea de 300 unidades o más).
+    excepciones: []
+  - id: CP-02-2026
+    fecha: 2026-02-12
+    acuerdos:
+      - Se aprueba el alza de 6 % en la lista de precios a partir del 01/03/2026.
+      - >-
+        Se RECHAZA la solicitud de excepción de Ferretería Norteña 11 (CLI-FER-011) por un descuento
+        comercial de 15 %; debe mantenerse el tope del canal (7 %).
+    excepciones:
+      # Rechazada: el acta no fija vigencia (lo correcto es extraer fechas nulas).
+      - {cliente_id: CLI-FER-011, estado: rechazada, concepto: dscto_comercial, tope: 0.15, desde: null, hasta: null}
+  - id: CP-06-2026
+    fecha: 2026-06-18
+    acuerdos:
+      - Se aprueba la Grid Comercial del III Trimestre 2026 (perfilería, Constructora, 5 %).
+      - Se encarga a Pricing auditar los descuentos del canal Ferretería en la región Sur.
+    excepciones: []
+
+tarifario_flete:
+  id: TF-2025
+  vigencia_desde: 2025-01-01
+  soles_por_unidad_peso:   # coincide con el flete registrado en SAP
+    Lima: 0.35
+    Norte: 0.90
+    Sur: 1.00
+    Centro: 1.20
+    Oriente: 2.40

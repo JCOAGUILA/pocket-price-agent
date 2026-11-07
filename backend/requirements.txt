@@ -1,0 +1,16 @@
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+psycopg[binary,pool]==3.3.6
+langchain==1.4.7
+langchain-anthropic==1.7.6
+langchain-openai==1.7.2
+langgraph==1.2.16
+langgraph-checkpoint-postgres==3.2.0
+langsmith==0.14.12
+llama-index-core==0.14.25
+llama-index-embeddings-openai==0.7.0
+llama-index-vector-stores-elasticsearch==0.7.0
+elasticsearch==8.19.3
+google-cloud-storage==3.1.0
+google-cloud-secret-manager==2.23.3
+boto3==1.38.0

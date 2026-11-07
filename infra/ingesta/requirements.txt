@@ -1,0 +1,12 @@
+llama-index-core==0.14.25
+llama-index-readers-file==0.7.0
+llama-index-embeddings-openai==0.7.0
+llama-index-vector-stores-elasticsearch==0.7.0
+elasticsearch==8.19.3
+docx2txt==0.9
+langchain-anthropic==1.7.6
+langsmith==0.14.12
+psycopg[binary]==3.3.6
+google-cloud-storage==3.1.0
+google-cloud-secret-manager==2.23.3
+boto3==1.38.0
